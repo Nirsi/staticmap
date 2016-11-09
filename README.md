@@ -67,6 +67,20 @@ width         | diameter of marker in pixel
 #### Add a polygon:
 
 ```python
+marker = TriangleMarker(coordinate, heading, color, width)
+m.add_polygon(polygon)
+```
+
+parameter     | description
+------------- | -------------
+coordinate    | a lon/lat pair: e.g. `(120.1, 47.3)`
+heading       | Heading of the TriangleMarker in Degrees
+color         | a color definition Pillow <a href="http://pillow.readthedocs.org/en/latest/reference/ImageColor.html#color-names">supports</a>
+width         | height of marker in pixel
+
+#### Add a polygon:
+
+```python
 polygon = Polygon(coordinates, fill_color, outline_color, simplify)
 m.add_polygon(polygon)
 ```
