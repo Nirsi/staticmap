@@ -280,8 +280,7 @@ class StaticMap:
             self.x_center = _lon_to_x(lon_center, self.zoom)
             self.y_center = _lat_to_y(lat_center, self.zoom)
 
-        image = Image.new('RGB', (self.width, self.height), self.background_color)
-
+        image = Image.new('RGBA', (self.width, self.height), self.background_color)
         self._draw_base_layer(image)
         self._draw_features(image)
 
@@ -412,6 +411,19 @@ class StaticMap:
                 ]
                 image.paste(tile, box, tile)
 
+    def _create_triangle_(self, width, color):
+        triangle = Image.new('RGBA', (width * 2, width), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(triangle)
+        draw.polygon([width, 0, 0, width, (width * 2), width], color)
+        print triangle.mode
+        return triangle
+
+    def _rotate_triangle_(self, triangle, heading):
+        marker = triangle.resize(((triangle.size[0] * 10), (triangle.size[1] * 10)), Image.ANTIALIAS)
+
+        return marker.rotate(-heading, expand=True)
+
+
     def _draw_features(self, image):
         """
         :type image: Image.Image
@@ -455,105 +467,23 @@ class StaticMap:
             ), fill=circle.color)
 
         for triangle in filter(lambda m: isinstance(m, TriangleMarker), self.markers):
-            point = [
-                self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2,
-                self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2
-            ]
-            if triangle.heading == 0.0 or triangle.heading == 360.0:
-                arrowhead = ((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2),
-                             (self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) - triangle.width)
-            elif triangle.heading == 90.0:
-                arrowhead = ((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) + triangle.width,
-                             (self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2))
-            elif triangle.heading == 180.0:
-                arrowhead = ((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2),
-                             (self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) + triangle.width)
-            elif triangle.heading == 270:
-                arrowhead = ((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) - triangle.width,
-                             (self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2))
-            elif triangle.heading < 90:
-                arrowhead = (((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) + sin(pi/180 * triangle.heading) * triangle.width),
-                            ((self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) - cos(pi/180 * triangle.heading) * triangle.width))
-            elif triangle.heading > 90 and triangle.heading < 180:
-                arrowhead = (((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) + sin(pi/180 * (180 - triangle.heading)) * triangle.width),
-                            ((self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) + cos(pi/180 * (180 - triangle.heading)) * triangle.width))
-            elif triangle.heading > 90 and triangle.heading < 269:
-                arrowhead = (((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) - sin(pi/180 * (triangle.heading - 180)) * triangle.width),
-                            ((self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) + cos(pi/180 * (triangle.heading - 180)) * triangle.width))
-            elif triangle.heading > 270 and triangle.heading < 360:
-                arrowhead = (((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) - sin(pi/180 * (360 - triangle.heading)) * triangle.width),
-                            ((self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) - cos(pi/180 * (360 - triangle.heading)) * triangle.width))
-            else:
-                raise RuntimeError("Heading is not a Direction in Degree")
 
-            rightdegree = (triangle.heading + 90) % 360
-            leftdegree = (triangle.heading - 90) % 360
-
-            if rightdegree == 0.0 or rightdegree == 360.0:
-                rightcorner = ((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2),
-                             (self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) - triangle.width)
-            elif rightdegree == 90.0:
-                rightcorner = ((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) + triangle.width,
-                             (self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2))
-            elif rightdegree == 180.0:
-                rightcorner = ((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2),
-                             (self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) + triangle.width)
-            elif rightdegree == 270:
-                rightcorner = ((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) - triangle.width,
-                             (self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2))
-            elif rightdegree < 90:
-                rightcorner = (((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) + sin(pi/180 * rightdegree) * triangle.width),
-                            ((self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) - cos(pi/180 * rightdegree) * triangle.width))
-            elif rightdegree > 90 and rightdegree < 180:
-                rightcorner = (((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) + sin(pi/180 * (180 - rightdegree)) * triangle.width),
-                            ((self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) + cos(pi/180 * (180 - rightdegree)) * triangle.width))
-            elif rightdegree > 180 and rightdegree < 269:
-                rightcorner = (((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) - sin(pi/180 * (rightdegree - 180)) * triangle.width),
-                            ((self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) + cos(pi/180 * (rightdegree - 180)) * triangle.width))
-            elif rightdegree > 270 and rightdegree < 360:
-                rightcorner = (((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) - sin(pi/180 * (360 - rightdegree)) * triangle.width),
-                            ((self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) - cos(pi/180 * (360 - rightdegree)) * triangle.width))
-            else:
-                raise RuntimeError("right corner error!")
-
-            if leftdegree == 0.0 or leftdegree == 360.0:
-                leftcorner = ((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2),
-                             (self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) - triangle.width)
-            elif leftdegree == 90.0:
-                leftcorner = ((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) + triangle.width,
-                             (self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2))
-            elif leftdegree == 180.0:
-                leftcorner = ((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2),
-                             (self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) + triangle.width)
-            elif leftdegree == 270:
-                leftcorner = ((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) - triangle.width,
-                             (self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2))
-            elif leftdegree < 90:
-                leftcorner = (((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) + sin(pi/180 * leftdegree) * triangle.width),
-                            ((self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) - cos(pi/180 * leftdegree) * triangle.width))
-            elif leftdegree > 90 and leftdegree < 180:
-                leftcorner = (((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) + sin(pi/180 * (180 - leftdegree)) * triangle.width),
-                            ((self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) + cos(pi/180 * (180 - leftdegree)) * triangle.width))
-            elif leftdegree > 180 and leftdegree < 269:
-                leftcorner = (((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) - sin(pi/180 * (leftdegree - 180)) * triangle.width),
-                            ((self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) + cos(pi/180 * (leftdegree - 180)) * triangle.width))
-            elif leftdegree > 270 and leftdegree < 360:
-                leftcorner = (((self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2) - sin(pi/180 * (360 - leftdegree)) * triangle.width),
-                            ((self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2) - cos(pi/180 * (360 - leftdegree)) * triangle.width))
-            else:
-                raise RuntimeError("left Corner error!")
+            marker = self._create_triangle_(triangle.width, triangle.color)
+            cursor = self._rotate_triangle_(marker, triangle.heading)
 
 
-            draw.polygon([
-                arrowhead,
-                rightcorner,
-                leftcorner
+            position = (
+                self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)),
+                self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom))
+            )
+            print 'marker', marker.mode
+            print cursor.size
 
-            ], triangle.color)
+            cursor = cursor.resize(((cursor.size[0]/10),(cursor.size[1]/10)), Image.ANTIALIAS)
 
-            """testpoints = [(self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)) * 2, self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom)) * 2), arrowhead]
 
-            draw.line(testpoints, 'blue', 1)"""
+            image.paste(cursor, position, cursor)
+
 
         for polygon in self.polygons:
             points = [(
