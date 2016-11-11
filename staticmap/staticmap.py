@@ -415,7 +415,6 @@ class StaticMap:
         triangle = Image.new('RGBA', (width * 2, width), (0, 0, 0, 0))
         draw = ImageDraw.Draw(triangle)
         draw.polygon([width, 0, 0, width, (width * 2), width], color)
-        print triangle.mode
         return triangle
 
     def _rotate_triangle_(self, triangle, heading):
@@ -471,16 +470,12 @@ class StaticMap:
             marker = self._create_triangle_(triangle.width, triangle.color)
             cursor = self._rotate_triangle_(marker, triangle.heading)
 
-
             position = (
                 self._x_to_px(_lon_to_x(triangle.coord[0], self.zoom)),
                 self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom))
             )
-            print 'marker', marker.mode
-            print cursor.size
 
             cursor = cursor.resize(((cursor.size[0]/10),(cursor.size[1]/10)), Image.ANTIALIAS)
-
 
             image.paste(cursor, position, cursor)
 
