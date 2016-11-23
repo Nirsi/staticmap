@@ -116,6 +116,19 @@ class Polygon:
 
 
 class TriangleMarker:
+
+    """
+    Triangle that can be drawn on map
+
+    :param coords: an iterable of lon-lat pairs, e.g. ((0.0, 0.0), (175.0, 0.0), (175.0, -85.1))
+    :type coords: list
+    :param heading: heading of triangle in degrees
+    :type heading: float
+    :param color: color suitable for PIL / Pillow
+    :type color: str
+    :param width: actually the height of the triangle, from bottom to summit
+
+    """
     def __init__(self, coord, heading, color, width):
         self.coord = coord
         self.heading = heading
@@ -418,6 +431,7 @@ class StaticMap:
         return triangle
 
     def _rotate_triangle_(self, triangle, heading):
+        #rotating triangle to given degree, also make it 10*size because of aliasing
         marker = triangle.resize(((triangle.size[0] * 10), (triangle.size[1] * 10)), Image.ANTIALIAS)
 
         return marker.rotate(-heading, expand=True)
@@ -475,8 +489,10 @@ class StaticMap:
                 self._y_to_px(_lat_to_y(triangle.coord[1], self.zoom))
             )
 
+            #resize the triangle to avoid aliasing
             cursor = cursor.resize(((cursor.size[0]/10),(cursor.size[1]/10)), Image.ANTIALIAS)
 
+            #third argument is for box, to keep transparency when image is pasted
             image.paste(cursor, position, cursor)
 
 
