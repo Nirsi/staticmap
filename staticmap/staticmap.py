@@ -126,18 +126,18 @@ class TriangleMarker:
     :type heading: float
     :param color: color suitable for PIL / Pillow
     :type color: str
-    :param width: actually the height of the triangle, from bottom to summit
+    :param height: height of the triangle, from bottom to summit, width will be height*2
 
     """
-    def __init__(self, coord, heading, color, width):
+    def __init__(self, coord, heading, color, height):
         self.coord = coord
         self.heading = heading
         self.color = color
-        self.width = width
+        self.height = height
 
     @property
     def extent_px(self):
-        return (self.width,) * 4
+        return (self.height,) * 4
 
 
 
@@ -424,10 +424,10 @@ class StaticMap:
                 ]
                 image.paste(tile, box, tile)
 
-    def _create_triangle_(self, width, color):
-        triangle = Image.new('RGBA', (width * 2, width), (0, 0, 0, 0))
+    def _create_triangle_(self, height, color):
+        triangle = Image.new('RGBA', (height * 2, height), (0, 0, 0, 0))
         draw = ImageDraw.Draw(triangle)
-        draw.polygon([width, 0, 0, width, (width * 2), width], color)
+        draw.polygon([height, 0, 0, height, (height * 2), height], color)
         return triangle
 
     def _rotate_triangle_(self, triangle, heading):
@@ -481,7 +481,7 @@ class StaticMap:
 
         for triangle in filter(lambda m: isinstance(m, TriangleMarker), self.markers):
 
-            marker = self._create_triangle_(triangle.width, triangle.color)
+            marker = self._create_triangle_(triangle.height, triangle.color)
             cursor = self._rotate_triangle_(marker, triangle.heading)
 
             position = (
@@ -492,7 +492,7 @@ class StaticMap:
             #resize the triangle to avoid aliasing
             cursor = cursor.resize(((cursor.size[0]/10),(cursor.size[1]/10)), Image.ANTIALIAS)
 
-            #third argument is for box, to keep transparency when image is pasted
+            #third argument is for mask, to keep transparency when image is pasted
             image.paste(cursor, position, cursor)
 
 
