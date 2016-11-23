@@ -121,19 +121,21 @@ class TriangleMarker:
     Triangle that can be drawn on map
 
     :param coords: an iterable of lon-lat pairs, e.g. ((0.0, 0.0), (175.0, 0.0), (175.0, -85.1))
-    :type coords: list
+    :type coords: tuple
     :param heading: heading of triangle in degrees
     :type heading: float
     :param color: color suitable for PIL / Pillow
     :type color: str
-    :param height: height of the triangle, from bottom to summit, width will be height*2
+    :param height: height of the triangle, from bottom to summit
+    :param width: width of triangle base
 
     """
-    def __init__(self, coord, heading, color, height):
+    def __init__(self, coord, heading, color, height, width):
         self.coord = coord
         self.heading = heading
         self.color = color
         self.height = height
+        self.width = width
 
     @property
     def extent_px(self):
@@ -424,10 +426,10 @@ class StaticMap:
                 ]
                 image.paste(tile, box, tile)
 
-    def _create_triangle_(self, height, color):
-        triangle = Image.new('RGBA', (height * 2, height), (0, 0, 0, 0))
+    def _create_triangle_(self, height, width, color):
+        triangle = Image.new('RGBA', (width, height), (0, 0, 0, 0))
         draw = ImageDraw.Draw(triangle)
-        draw.polygon([height, 0, 0, height, (height * 2), height], color)
+        draw.polygon([0, height, (width/2), 0, width, height], color)
         return triangle
 
     def _rotate_triangle_(self, triangle, heading):
@@ -481,7 +483,7 @@ class StaticMap:
 
         for triangle in filter(lambda m: isinstance(m, TriangleMarker), self.markers):
 
-            marker = self._create_triangle_(triangle.height, triangle.color)
+            marker = self._create_triangle_(triangle.height, triangle.width, triangle.color)
             cursor = self._rotate_triangle_(marker, triangle.heading)
 
             position = (

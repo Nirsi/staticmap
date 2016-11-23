@@ -77,6 +77,7 @@ coordinate    | a lon/lat pair: e.g. `(120.1, 47.3)`
 heading       | Heading of the triangle marker in Degrees
 color         | a color definition Pillow <a href="http://pillow.readthedocs.org/en/latest/reference/ImageColor.html#color-names">supports</a>
 height        | height of marker in pixel
+width         | width of marker in pixel
 
 #### Add a polygon:
 
