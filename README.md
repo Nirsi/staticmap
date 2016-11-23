@@ -67,7 +67,7 @@ width         | diameter of marker in pixel
 #### Add a map triangle marker:
 
 ```python
-marker = TriangleMarker(coordinate, heading, color, height)
+marker = TriangleMarker(coordinate, heading, color, height, width)
 m.add_polygon(polygon)
 ```
 
